@@ -12,6 +12,8 @@ import { UserDataExtractService } from '../../common/guards/jwt-auth/user-data-e
 import type { Metadata } from '@grpc/grpc-js';
 import type { GetProductRequestDto, GetProductResponseDto } from '../dto/get-product.dto';
 import type { ListProductsRequestDto, ListProductsResponseDto } from '../dto/list-products.dto';
+import type { UpdateProductRequestDto, UpdateProductResponseDto } from '../dto/update-product.dto';
+import type { DeleteProductRequestDto, DeleteProductResponseDto } from '../dto/delete-product.dto';
 
 @Controller()
 export class ProductController {
@@ -54,5 +56,29 @@ export class ProductController {
     const { userId } =
       this.userDataExtractService.extractUserData(metadata);
     return this.productService.listProducts(request, userId);
+  }
+
+  @GrpcMethod('ProductService', 'UpdateProduct')
+  @UseGuards(JwtAuthGuard)
+  @LogGrpc()
+  async updateProduct(
+    request: UpdateProductRequestDto,
+    metadata: Metadata,
+  ): Promise<UpdateProductResponseDto> {
+    const { userId } =
+      this.userDataExtractService.extractUserData(metadata);
+    return this.productService.updateProduct(request, userId);
+  }
+
+  @GrpcMethod('ProductService', 'DeleteProduct')
+  @UseGuards(JwtAuthGuard)
+  @LogGrpc()
+  async deleteProduct(
+    request: DeleteProductRequestDto,
+    metadata: Metadata,
+  ): Promise<DeleteProductResponseDto> {
+    const { userId } =
+      this.userDataExtractService.extractUserData(metadata);
+    return this.productService.deleteProduct(request, userId);
   }
 }

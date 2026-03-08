@@ -4,6 +4,7 @@ import { Product } from '../model/product.model';
 import { CreateProductRequestDto } from '../dto/create-product.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, type HydratedDocument } from 'mongoose';
+import type { UpdateProductRequestDto } from '../dto/update-product.dto';
 
 @Injectable()
 export class ProductRepository {
@@ -56,8 +57,6 @@ export class ProductRepository {
   }> {
     const skip = (page - 1) * limit;
 
-    
-
     const [products, total] = await Promise.all([
       this.productModel
         .find({ user: userId })
@@ -70,5 +69,37 @@ export class ProductRepository {
     ]);
 
     return { products, total };
+  }
+
+  async updateByIdAndUserId(
+    id: string,
+    userId: string,
+    dto: Omit<UpdateProductRequestDto, 'id'>,
+  ): Promise<Product & { _id?: any; createdAt?: Date; updatedAt?: Date } | null> {
+    const updated = await this.productModel
+      .findOneAndUpdate(
+        { _id: id, user: userId },
+        {
+          $set: {
+            name: dto.name,
+            description: dto.description,
+            price: dto.price,
+            stock: dto.stock,
+          },
+        },
+        { new: true },
+      )
+      .lean()
+      .exec();
+
+    return updated ?? null;
+  }
+
+  async deleteByIdAndUserId(id: string, userId: string): Promise<boolean> {
+    const result = await this.productModel
+      .deleteOne({ _id: id, user: userId })
+      .exec();
+
+    return result.deletedCount === 1;
   }
 }

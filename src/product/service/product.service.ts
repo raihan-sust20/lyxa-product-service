@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ProductRepository } from '../repository/product.repository';
-import { CreateProductRequestDto, CreateProductResponseDto } from '../dto/create-product.dto';
+import {
+  CreateProductRequestDto,
+  CreateProductResponseDto,
+} from '../dto/create-product.dto';
 import type {
   ListProductsRequestDto,
   ListProductsResponseDto,
@@ -15,6 +18,8 @@ import type {
   GetProductRequestDto,
   GetProductResponseDto,
 } from '../dto/get-product.dto';
+import type { DeleteProductRequestDto, DeleteProductResponseDto } from '../dto/delete-product.dto';
+import type { UpdateProductRequestDto, UpdateProductResponseDto } from '../dto/update-product.dto';
 
 @Injectable()
 export class ProductService {
@@ -98,6 +103,73 @@ export class ProductService {
       total,
       page,
       limit,
+    };
+  }
+
+  async updateProduct(
+    dto: UpdateProductRequestDto,
+    userId: string,
+  ): Promise<UpdateProductResponseDto> {
+    this.logger.log(
+      `Updating product id=${dto.id} for userId=${userId}`,
+      ProductService.name,
+    );
+
+    const updated = await this.productRepository.updateByIdAndUserId(
+      dto.id,
+      userId,
+      {
+        name: dto.name,
+        description: dto.description,
+        price: dto.price,
+        stock: dto.stock,
+      },
+    );
+
+    if (!updated) {
+      throw new DomainException(
+        `Product ${dto.id} not found`,
+        DomainExceptionCode.NOT_FOUND,
+      );
+    }
+
+    this.logger.log(
+      `Product updated id=${dto.id} userId=${userId}`,
+      ProductService.name,
+    );
+
+    return this.toProductItem(updated);
+  }
+
+  async deleteProduct(
+    dto: DeleteProductRequestDto,
+    userId: string,
+  ): Promise<DeleteProductResponseDto> {
+    this.logger.log(
+      `Deleting product id=${dto.id} for userId=${userId}`,
+      ProductService.name,
+    );
+
+    const deleted = await this.productRepository.deleteByIdAndUserId(
+      dto.id,
+      userId,
+    );
+
+    if (!deleted) {
+      throw new DomainException(
+        `Product ${dto.id} not found`,
+        DomainExceptionCode.NOT_FOUND,
+      );
+    }
+
+    this.logger.log(
+      `Product deleted id=${dto.id} userId=${userId}`,
+      ProductService.name,
+    );
+
+    return {
+      success: true,
+      message: `Product ${dto.id} deleted successfully`,
     };
   }
 
