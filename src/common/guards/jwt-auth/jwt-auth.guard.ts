@@ -4,6 +4,10 @@ import { status, Metadata } from '@grpc/grpc-js';
 import { AuthRpcService } from './auth-rpc.service';
 import { AuthenticatedUser } from './authenticated-user.interface';
 import { LoggerService } from '../../logger/logger.service';
+import {
+  DomainException,
+  DomainExceptionCode,
+} from '../../exceptions/domain.exception';
 
 /**
  * Guard that validates a JWT access token by forwarding it to auth-service
@@ -61,23 +65,31 @@ export class JwtAuthGuard implements CanActivate {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   private extractGrpcMetadata(context: ExecutionContext): Metadata {
-    const [, metadata] = context.switchToRpc().getContext<[unknown, Metadata]>();
-    return metadata ?? new Metadata();
+    const rpcContext = context.switchToRpc().getContext();
+
+    if (rpcContext instanceof Metadata) {
+      return rpcContext;
+    }
+
+    if (rpcContext?.metadata instanceof Metadata) {
+      return rpcContext.metadata;
+    }
+
+    return new Metadata();
   }
 
   private extractBearerToken(metadata: Metadata): string | null {
-    const values = metadata.get('authorization');
+    const [values] = metadata.get('authorization');
     if (!values.length) return null;
 
-    const header = String(values[0]);
+
+    const header = values.toString();
+
     const match = header.match(/^Bearer\s+(\S+)$/i);
     return match ? match[1] : null;
   }
 
   private throwUnauthenticated(message: string): never {
-    throw new RpcException({
-      code: status.UNAUTHENTICATED,
-      message,
-    });
+    throw new DomainException(message, DomainExceptionCode.UNAUTHORIZED);
   }
 }

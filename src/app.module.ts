@@ -6,26 +6,13 @@ import type { Connection, ConnectOptions } from 'mongoose';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { ProductModule } from './product/product.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
-    }),
-    RabbitMQModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        exchanges: [
-          {
-            name: 'auth.events',
-            type: 'topic',
-          },
-        ],
-        uri: config.get<string>('rabbitmq.url')!,
-        connectionInitOptions: { wait: false },
-      }),
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -58,6 +45,7 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
     }),
     CommonModule,
     UserModule,
+    ProductModule,
   ],
 })
 export class AppModule {}

@@ -56,6 +56,6 @@ message ProductResponse {
   string description = 3;
   double price = 4;
   int32 stock = 5;
-  string created_at = 6;
-  string updated_at = 7;
+  string createdAt = 6;
+  string updatedAt = 7;
 }
