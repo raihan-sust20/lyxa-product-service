@@ -15,8 +15,7 @@ export class ProductRepository {
   async create(
     dto: CreateProductRequestDto,
     userId: string,
-  ): Promise<HydratedDocument<Product>>
-{
+  ): Promise<Product & { _id?: any; createdAt?: Date; updatedAt?: Date }> {
     const created = await this.productModel.create({
       user: userId,
       name: dto.name,
@@ -25,6 +24,51 @@ export class ProductRepository {
       stock: dto.stock,
     });
 
-    return created;
+    return created.toObject();
+  }
+
+  async findByIdAndUserId(
+    id: string,
+    userId: string,
+  ): Promise<
+    | (Product & {
+        _id?: any;
+        createdAt?: Date;
+        updatedAt?: Date;
+      })
+    | null
+  > {
+    const product = await this.productModel
+      .findOne({ _id: id, user: userId })
+      .lean()
+      .exec();
+
+    return product ?? null;
+  }
+
+  async findAllByUserId(
+    userId: string,
+    page: number,
+    limit: number,
+  ): Promise<{
+    products: (Product & { _id?: any; createdAt?: Date; updatedAt?: Date })[];
+    total: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    
+
+    const [products, total] = await Promise.all([
+      this.productModel
+        .find({ user: userId })
+        .find({})
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.productModel.countDocuments({ user: userId }).exec(),
+    ]);
+
+    return { products, total };
   }
 }
